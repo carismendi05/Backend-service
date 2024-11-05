@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AppDataSource } from "../data-source";
-import { Produc } from "../entities/Product"; 
+import { Product } from "../entities/Product"; 
 
 //Traemos la tabla o entidad producto de la base de datos 
 const productRepository = AppDataSource.getRepository(Product)
@@ -21,29 +21,36 @@ export const getAllProducts = async(req: Request, res: Response) => {
 export const getProductByID = async(req: Request, res: Response) => {
     try {
         const product = await productRepository.findOneBy({
+            id: parseInt(req.params.id)
         });
         if (product) {
-            res.json(product);
         } else {
             res.status(404).json({
                 message: "Producto no encontrado."
             });
-        } catch(error) {
-            res.status(500).json ({
-                message: "Error al obtener el producto."
-            });
-    };
+        }
+    } catch(error) {
+        res.status(500).json({
+            message: "Error al obtener el producto."
+        });
+    }
+};
 
-// Crear un producto 
-export const createProduct = async(req: Request, res: Response) => {
+// Crear un producto
+export const createProduct = async (req: Request, res: Response) => {
     try {
-        const { name, description, price } = req.body; 
+        const { name, description, price } = req.body;
         const product = new Product();
-        product.name = name; 
+        product.name = name;
         product.description = description;
         product.price = price;
+
         await productRepository.save(product);
-        res.status(500)json.({
+        res.status(201).json({
+            message: "Producto creado exitosamente."
+        });
+    } catch (error) {
+        res.status(500).json({
             message: "Error al crear el producto."
         });
     }
@@ -61,28 +68,40 @@ export const updateProduct = async(req: Request, res: Response) => {
 
 // Validamos que el producto tenga informacion 
 if (product) {
-    product.name = name ?? product.name; 
-    product.description = description = ?? product.description;
+    product.name = name ?? product.name;
+    product.description = description ?? product.description;
     product.price = price ?? product.price;
-    await productRepository.save(product); // Guardar los cambios del producto 
-    res.json(product);
-} else {
+    await productRepository.save(product); // Guardamos los cambios del producto 
     res.status(404).json({
-        message: "No se encontró el producto."
+        message: "No se encontro el producto."
     });
-}; 
+}
 
 // Eliminar un producto existente 
 export const deleteProduct = async(req: Request, res: Response) => {
     try {
         // Buscamos el producto para eliminarlo 
-        const.product = await productRepository.findOneBy({
+        const product = await productRepository.findOneBy({
             id: parseInt(req.params.id)
         });
 
-        // Validamos que el producto tenga informacion 
+        // Validamos que el producto tenga informacion
+        if (product) {
+            await productRepository.remove(product); // Borramos el producto
+            res.json({
+                message: "Producto Eliminado."
+            });
+        } else {
+            res.status(404).json({
+                message: "No se encontró el producto."
+            });
+        }
+    } catch(error) {
+        res.status(500).json({
+            message: "Error al eliminar el producto."
+        });
     }
-}
+};
 
 
 
